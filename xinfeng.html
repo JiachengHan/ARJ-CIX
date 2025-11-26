@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Christmas Envelope</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+        }
+
+        .scene {
+            width: 90vw;
+            max-width: 660px;
+            max-height: 450px;
+            aspect-ratio: 4 / 3;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .envelope {
+            position: relative;
+            width: 100%;
+            height: 70%;
+            max-height: 320px;
+            background: #fdfdfd;
+            border-radius: 24px;
+            box-shadow: 0 18px 35px rgba(0, 0, 0, 0.25);
+            overflow: hidden;
+            border: 2px solid #e2e6f2;
+            transform-origin: center bottom;
+            transition: transform 0.6s ease-out, box-shadow 0.6s ease-out;
+        }
+
+        .envelope::before,
+        .envelope::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 10%;
+            background: #ea4335;
+        }
+
+        .envelope::before {
+            left: 0;
+        }
+
+        .envelope::after {
+            right: 0;
+        }
+
+
+        /* 上盖 */
+        .envelope-flap {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            width: 100%;
+            height: 60%;
+            transform: translateX(-50%);
+            transform-origin: top center;
+            background: #ff2c2c;
+
+            /* 关键：使用 clip-path 裁成真实信封三角形 */
+            clip-path: polygon(0 0, 50% 26%, 100% 0,
+                    /* 顶部横线 */
+                    100% 26%, 50% 80%, 0 26%
+                    /* 底下 V 字 */
+                );
+
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+            transition: transform 0.7s ease-in-out;
+        }
+
+
+        /* 里面的内容（文字 + 按钮） */
+        .envelope-inner {
+            position: absolute;
+            inset: 6% 10% 10%;
+            background: transparent;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+            padding: 16px;
+        }
+
+
+        .title {
+            font: italic 1em Georgia, serif;
+            font-size: 20px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-bottom: 20px;
+        }
+
+        .seal-btn {
+            position: relative;
+            z-index: 3;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 26px;
+            border-radius: 999px;
+            background: #e5093c;
+            color: #ffffff;
+            font-weight: 700;
+            font-size: 14px;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 10px 22px rgba(229, 9, 60, 0.6);
+            transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.2s ease;
+        }
+
+        .seal-btn::before {
+            content: "";
+            position: absolute;
+            inset: -4px;
+            border-radius: inherit;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            opacity: 0.7;
+        }
+
+        .seal-btn span {
+            margin-right: 6px;
+        }
+
+        .seal-btn .emoji {
+            font-size: 18px;
+        }
+
+        .seal-btn:hover {
+            filter: brightness(1.1);
+            transform: translateY(-2px);
+            box-shadow: 0 14px 28px rgba(229, 9, 60, 0.7);
+        }
+
+        .seal-btn:active {
+            transform: translateY(1px) scale(0.98);
+            box-shadow: 0 6px 14px rgba(229, 9, 60, 0.5);
+        }
+
+        /* 打开状态的动画 */
+        .envelope.open .envelope-flap {
+            transform: translateX(-50%) rotateX(160deg);
+            box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+        }
+
+        .envelope.open {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 26px 45px rgba(0, 0, 0, 0.35);
+        }
+
+        @media (max-width: 480px) {
+            .scene {
+                max-width: 360px;
+            }
+
+            .title {
+                font-size: 18px;
+            }
+
+            .subtitle {
+                font-size: 13px;
+            }
+
+            .seal-btn {
+                padding: 12px 22px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="scene">
+        <div class="envelope" id="envelope">
+            <!-- 信封盖 -->
+            <div class="envelope-flap"></div>
+
+            <!-- 信封里的文字 + 按钮 -->
+            <div class="envelope-inner">
+                <div class="title">Merry Christmas</div>
+                <div class="subtitle">✨</div>
+
+                <button class="seal-btn" id="openBtn">
+                    <span>Open My Christmas Card</span>
+                    <span class="emoji">🎁</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var envelope = document.getElementById('envelope');
+            var btn = document.getElementById('openBtn');
+            var isOpening = false;
+
+            // 👉 这里改成你要跳转的链接
+            var targetUrl = 'https://www.maka.im/mk-viewer-7/h5/605486549/RLBDJ6LBW605486549';
+
+            btn.addEventListener('click', function () {
+                if (isOpening) return;
+                isOpening = true;
+
+                // 添加打开动画
+                envelope.classList.add('open');
+
+                // 等动画播完再跳转
+                setTimeout(function () {
+                    window.location.href = targetUrl;
+                }, 900); // 跟 CSS 里 0.7s 动画差不多，稍微多一点
+            });
+        })();
+    </script>
+</body>
+
+</html>
